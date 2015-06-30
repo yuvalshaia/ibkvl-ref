@@ -1,0 +1,121 @@
+.\" LICENSE
+.\"
+.\" GPL
+
+.TH mlxkvl 1 "September 20, 2011"
+
+.SH NAME
+mlxkvl \-This file describes the Linux* drive for Mellanox Verification Kernel testing and libraries formaly known as KVL 
+
+.SH SYNOPSIS
+.PD 0.4v
+modprobe mlxkvl [<option>=<VAL1>,<VAL2>,...]
+.PD 1v
+
+.SH DESCRIPTION
+This driver is intended for \fB2.6.x\fR and \fB3.0.x\fR kernels. 
+.LP
+
+This driver is only supported as a loadable module at this time.
+ 
+This Driver exports and declares SW verification kernel header files and thier implementation: e.g :-
+.LP
+.IP
+mlxkvl.h 	:- types and function declaration for this module usage.
+.LP
+.IP
+vl.h     	:- vl library common includes.
+.LP
+.IP
+vl_os.h 	:- Operating system includes.
+.LP
+.IP
+vl_rand.h	:- help functions for randomization.
+.LP
+.IP
+vl_trace.h	:- helpful trace functions.
+.LP
+.IP
+vl_types.h      :- common types.
+.LP
+.IP
+vl_utils.h 	:- common utils.
+.LP
+.IP
+vl_gen2k_str.h  :- methods and macros to convert from IB verbs.h types to string.
+
+.LP
+
+the headers and the symvers file will be installed under :- /usr/src/mlxkvl/
+.LP
+.IP
+kvl_config.mk 	:- macro for make file to look for ofed installation and prepare the libibverbs includes
+.LP
+.IP
+kvl_generic_makefile.mk :- generic macro for linux kernel modules Makefile
+
+.SH OPTIONS
+No options , just load the module
+.IP
+
+.SH Usage : 
+.LP
+This Driver provides two features : 
+.IP
+- exprting help functions for IB and general kernel module methods
+.IP
+- registeration functions for registering new tests under mlxkvl module to be managed and run through procfs,
+each test can register as much test as it needs each test will appear under /proc/mlxkvl/[test_name].
+see test registeration section .     
+.LP
+
+.SH Example :-
+Example kernel modules will be installed under  /usr/src/mlxkvl/examples/
+.LP
+Makefile :-
+.IP 
+See Examples Make files
+.IP 
+for including kvl headers add to your Makefile : EXTRA_CFLAGS += -I$(KVL_SRC_DIR)/include
+example module :-
+	
+.SH Headers and Services :-
+.IP
+TODO : use http://www.fnal.gov/docs/products/ups/ReferenceManual/html/manpages.html 
+to format and document all the installed headers
+mlxkvl.h 	:- types and function declaration for this module usage.
+.LP
+.IP
+vl.h     	:- vl library common includes.
+.LP
+.IP
+vl_os.h 	:- Operating system includes.
+.LP
+.IP
+vl_rand.h	:- help functions for randomization.
+.LP
+.IP
+vl_trace.h	:- helpful trace functions.
+.LP
+.IP
+vl_types.h      :- common types.
+.LP
+.IP
+vl_utils.h 	:- common utils.
+.LP
+.IP
+vl_gen2k_str.h  :- methods and macros to convert from IB verbs.h types to string.
+
+.LP
+
+
+
+
+.SH SUPPORT
+.LP
+for additional information, building, and installation, see the Readme file included with the driver.
+.LP
+For general information : saeedm@mellanox.com
+.IP
+.B saeedm@mellanox.com
+.LP

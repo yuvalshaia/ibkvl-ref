@@ -1,0 +1,138 @@
+#!/bin/bash
+###################################################################
+# Name        : FMR Tester
+#
+# Author      : Yuval Shaia
+# Date        : Feb 2014
+# Description : FMR tester script based on mlxkvl pfmr tester
+#               Tests:
+#                   1. Create FMRs and run RDMA send transactions
+#                      to copy first half buffers to 
+#                   2. 
+###################################################################
+
+num_fmrs=20 # scripts first arg
+
+run_cmd()
+{
+	dmesg -c > /dev/null
+	log=`$1 2`
+	if [ $? != 0 ]; then
+		echo "---> Fail in command: '$1'"
+		echo $log
+		dmesg -c
+		echo $1
+	fi
+}
+
+fill_buffer()
+{
+	res=$1	
+	char=$2
+	size=$3
+	
+	_res=""
+	_size=0
+	while [ $_size -lt $size ]; do
+		_res="$_res""$char"
+		_size=`echo $_res|wc -c`
+	done
+	eval $res=$_res	
+}
+
+init_test()
+{
+	num_fmrs=$1
+
+	echo -n "Initializing test ($num_fmrs FMRs)..."
+
+	log=`mlxkvl stop;mlxkvl start && insmod pfmr_ktest.ko`
+
+	run_cmd "mlxkvl mlx4_0-create_fmr max_pages=2 nfmr=$num_fmrs"
+	run_cmd "mlxkvl mlx4_0-create_dma ndma=$num_fmrs"
+
+	# Create QP for RDMA operation
+	run_cmd "mlxkvl mlx4_0-cq cr=1"
+	run_cmd "mlxkvl mlx4_0-qp cr=1 scq_idx=1 rcq_idx=1"
+	run_cmd "mlxkvl mlx4_0-qp rts=1 port=1 dqpn_idx=1"
+
+	echo "done"
+}
+
+init_fmrs()
+{
+	echo -n "Initializing FMRs..."
+	num_fmrs=$1
+	i=0
+	while [ $i -lt $num_fmrs ]; do
+		i=`expr $i + 1`
+		echo -n -e "\rInitializing FMRs: $i "
+		run_cmd "mlxkvl mlx4_0-dma dma_idx=$i set=data$i"
+		run_cmd "mlxkvl mlx4_0-fmr_map fmr_idx=$i dma_idx=$i"
+		#buf=$i
+		#fill_buffer buf $i 100
+		bug=$RANDOM
+		run_cmd "mlxkvl mlx4_0-dma dma_idx=$i set=$buf"
+		#mlxkvl mlx4_0-dma dma_idx=$i get=1|grep Buffer|awk '{print $4}'
+	done
+
+	echo "done"
+}
+
+rdma_bottom_half_to_top_half()
+{
+	num_fmrs=$1
+	half_num_fmrs=`expr $num_fmrs / 2`
+
+	#echo -n "Running test..."
+
+	# Run RDMA
+	i=0
+	while [ $i -lt $half_num_fmrs ]; do
+		i=`expr $i + 1`
+		echo -n -e "\rSending: $i "
+		j=`expr $i + $half_num_fmrs`
+		run_cmd "mlxkvl mlx4_0-qp rdma=1 fmr_idx=$i rfmr_idx=$j"
+	done
+	echo "done"
+
+	# Verify results
+	i=0
+	errors=0
+	while [ $i -lt $half_num_fmrs ]; do
+		i=`expr $i + 1`
+		echo -n -e "\rCheking: $i "
+		j=`expr $i + $half_num_fmrs`
+		src_val=`mlxkvl mlx4_0-dma dma_idx=$i get=1|grep Buffer|awk '{print $4}'`
+		dst_val=`mlxkvl mlx4_0-dma dma_idx=$j get=1|grep Buffer|awk '{print $4}'`
+		if [ "x$src_val" != "x$dst_val" ]; then
+			#echo "Error: src $i, dst $j, expecting $src_val, found $dst_val"
+			errors=`expr $errors + 1`
+		fi
+	done
+
+	# Print results
+	echo "done, $errors errors"
+}
+
+# Init test context
+if [ $# -eq 1 ]; then
+	num_fmrs=$1
+fi
+
+# Make sure FMR count is positive
+num_fmrs=`expr $num_fmrs / 2`
+num_fmrs=`expr $num_fmrs \* 2`
+
+# Init test
+init_test $num_fmrs
+
+# Create FMR and map to DMA buffers
+init_fmrs $num_fmrs
+
+# RDMA bottom half to top half
+rdma_bottom_half_to_top_half $num_fmrs
+
+echo -n "Cleanning..."
+log=`mlxkvl stop`
+echo "done"

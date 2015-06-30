@@ -1,0 +1,12 @@
+
+Kernel Tests:
+	make and install mlxver-mlxkvl: 
+        - make -C lib/mlxver-mlxkvl/src/ install
+        run sample test:
+        - cd kernel/IB/sample_test/
+	- make 
+	- mlxkvl start 
+	- insmod sample_test.ko
+	- mlxkvl --help 
+
+ 
