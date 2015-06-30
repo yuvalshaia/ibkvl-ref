@@ -1,0 +1,16 @@
+CC = gcc
+CFLAGS += -g -O2 -Wall
+LDFLAGS += -libverbs -lvl
+OBJECTS = ksend_lat_user.o
+TARGET = ib_ksend_lat 
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
+
+ksend_lat_user.o: ksend_lat_user.c ksend_lat.h
+
+clean:
+	rm -f $(OBJECTS) $(TARGET)
+

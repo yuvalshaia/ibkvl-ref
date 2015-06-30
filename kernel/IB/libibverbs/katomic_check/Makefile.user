@@ -1,0 +1,18 @@
+CC = gcc
+CFLAGS += -g -O2 -Wall -W -Werror 
+LDFLAGS += -libverbs -lvl
+OBJECTS = user_main.o
+TARGETS = katomic_test 
+
+all: $(TARGETS)
+
+katomic_test: $(OBJECTS)
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
+
+main.o: main.c types.h
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm -f $(OBJECTS) $(TARGETS)
+
+

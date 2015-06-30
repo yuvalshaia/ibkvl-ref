@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+# -*- python -*-
+#
+# Author:  Saeed Mahameed  Saeedm@mellanox.co.il -- Created: 2011/Apr
+
+""" mlxkvl kernel module manager script  
+"""
+
+__author__ =  'Saeed Mahameed - saeedm@mellanox.co.il'
+__version__=  '1.0'
+
+import os
+import sys
+import commands
+INFO = """this script manages mlxkvl kernel module and kernel tests, see man mlxkvl\n\n
+Usage:-
+\tmlxkvl <testname> [<test_params>|--help]
+\tTo see info about registered kernel tests :
+\t\tmlxkvl info 
+\tTo START mlxkvl module :
+\t\tmlxkvl start
+\tTo STOP mlxkvl module :
+\t\tmlxkvl stop
+
+ALL tests are found under /proc/mlxkvl/<tests>
+"""
+OPS=["info","start","stop"]
+def stop_mlxkvl ():
+    cmd = "/sbin/lsmod | /bin/grep mlxkvl"
+    (rc,output) = commands.getstatusoutput(cmd)
+    if rc:
+        print "ERROR: command '%s' failed : %s" % (cmd,output)
+    dep_modules = []
+    for line in output.split("\n") :
+        line = line.split()
+        #print line
+        if len(line) > 3 and line[0].strip()=="mlxkvl":
+            dep_modules += line[3].split(",")
+    print "Unloading modules %s" % dep_modules
+    for mod in dep_modules :
+        rc = os.system("/sbin/rmmod %s" % mod)
+    rc = os.system("modprobe -r mlxkvl")
+    return rc
+
+if __name__ == "__main__":
+    op = "info"
+    args = ""
+    if len(sys.argv) > 1:
+        op = sys.argv[1]
+        if op=="--help":
+            print INFO
+            sys.exit(1)
+        if len(sys.argv) > 2:
+            args = " ".join(sys.argv[2:])
+    rc = 0
+    os.system("dmesg -c > /dev/null")
+    if op=="start":
+        rc = os.system("modprobe mlxkvl")
+    elif op=="stop":
+        rc = stop_mlxkvl ()
+    elif op=="info":
+        rc = os.system("echo '%s' > /proc/mlxkvl/kvlinfo" % args)
+    else:
+        rc = os.system("echo '%s' > /proc/mlxkvl/%s" %(args,op))
+    if rc:
+        rc = 1
+    os.system("dmesg")
+
+    sys.exit(rc)
+
+
+
+            
+
+
+
+
+
+

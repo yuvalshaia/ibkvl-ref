@@ -1,0 +1,1 @@
+rmmod kverbs_basic.ko;make clean&&make&& insmod kverbs_basic.ko
